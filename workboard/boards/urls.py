@@ -25,6 +25,4 @@ urlpatterns = [
     path('csrf/', CSRFTokenView.as_view(), name='csrf_token'),
     path('users/<int:user_id>/assignments/', UserAssignmentsView.as_view(), name='user_assignments'),
     path('users/<int:user_id>/assigned-boards/', UserAssignedBoardsView.as_view(), name='user_assigned_boards'),
-    path('', include(router.urls)),
-    path('csrf-token/', CSRFTokenView.as_view(), name='csrf_token'),
 ]
