@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView,
     LogoutView,
+    SignUpView,
     CurrentUserView,
     CSRFTokenView,
     BoardViewSet,
@@ -21,6 +22,7 @@ router.register(r'users', UserViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginView.as_view(), name='login'),
+    path('signup/', SignUpView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('users/me/', CurrentUserView.as_view(), name='current_user'),
     path('csrf/', CSRFTokenView.as_view(), name='csrf_token'),

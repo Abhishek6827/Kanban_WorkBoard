@@ -31,6 +31,36 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 @method_decorator(csrf_exempt, name='dispatch')
+class SignUpView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not username or not email or not password:
+            return Response({'error': 'Please provide username, email and password'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            return Response({
+                'message': 'User created successfully',
+                'user_id': user.pk,
+                'username': user.username
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}")
+            return Response({'error': 'Failed to create user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
