@@ -57,7 +57,6 @@ class BoardSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        validated_data.pop('owner', None) 
         board = Board.objects.create(owner=user, **validated_data)
         return board
 
@@ -72,24 +71,13 @@ class BoardSerializer(serializers.ModelSerializer):
         representation['tasks'] = TaskSerializer(instance.tasks.all(), many=True, context=self.context).data
         return representation
 
-class AssignmentSerializer(serializers.ModelSerializer):
-    board = BoardSerializer(read_only=True)
-    task = TaskSerializer(read_only=True)
-
+class TaskStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['id', 'title', 'description', 'status', 'board', 'task', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = ['status']
 
-class AssignedBoardSerializer(serializers.ModelSerializer):
-    tasks = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Board
-        fields = ['id', 'name', 'description', 'tasks', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def get_tasks(self, obj):
+    def update(self, instance, validated_data):
         user = self.context['request'].user
-        tasks = obj.tasks.filter(assignee=user)
-        return TaskSerializer(tasks, many=True).data
+        if user != instance.created_by and user != instance.board.owner and user != instance.assignee:
+            raise serializers.ValidationError({"detail": "You don't have permission to update this task."})
+        return super().update(instance, validated_data)

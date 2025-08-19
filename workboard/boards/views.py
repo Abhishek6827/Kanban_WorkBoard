@@ -1,6 +1,5 @@
 from django.contrib.auth import authenticate
 from django.db.models import Q
-from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -12,8 +11,9 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
+from django.http import Http404
 from .models import Board, Task
-from .serializers import BoardSerializer, TaskSerializer, UserSerializer
+from .serializers import BoardSerializer, TaskSerializer, UserSerializer, TaskStatusUpdateSerializer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class CustomAuthToken(ObtainAuthToken):
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -43,7 +43,6 @@ class LoginView(APIView):
             return Response({'error': 'Please provide both username and password'}, status=status.HTTP_400_BAD_REQUEST)
         
         user = authenticate(username=username, password=password)
-        
         if user:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
@@ -57,7 +56,7 @@ class LoginView(APIView):
 class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def post(self, request):
         try:
             request.user.auth_token.delete()
@@ -69,14 +68,14 @@ class LogoutView(APIView):
 class CurrentUserView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
 class CSRFTokenView(APIView):
     permission_classes = [AllowAny]
-
+    
     def get(self, request):
         from django.middleware.csrf import get_token
         return Response({'csrfToken': get_token(request)})
@@ -86,10 +85,10 @@ class BoardViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = BoardSerializer
     queryset = Board.objects.all()
-
+    
     def get_queryset(self):
         return Board.objects.filter(Q(owner=self.request.user) | Q(tasks__assignee=self.request.user)).distinct()
-
+    
     def create(self, request, *args, **kwargs):
         try:
             logger.info(f"Attempting to create board with data: {request.data}")
@@ -105,10 +104,10 @@ class BoardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error creating board: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while creating the board: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
-
+    
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -120,7 +119,7 @@ class BoardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error updating board: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while updating the board: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -142,7 +141,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return Task.objects.filter(Q(board__owner=user) | Q(assignee=user))
-
+    
     def create(self, request, *args, **kwargs):
         try:
             board_id = request.data.get('board')
@@ -170,14 +169,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error creating task: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while creating the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
     def perform_create(self, serializer):
         board_id = self.request.data.get('board')
         board = Board.objects.get(id=board_id)
         assignee_id = self.request.data.get('assignee_id')
         assignee = User.objects.get(id=assignee_id) if assignee_id else None
         serializer.save(created_by=self.request.user, board=board, assignee=assignee)
-
+    
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -191,7 +190,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error updating task: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while updating the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -206,12 +205,35 @@ class TaskViewSet(viewsets.ModelViewSet):
             logger.error(f"Error deleting task: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while deleting the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class TaskStatusUpdateView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def patch(self, request, task_id):
+        try:
+            task = Task.objects.get(id=task_id)
+            
+            # Check permissions
+            if request.user != task.board.owner and request.user != task.assignee:
+                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = TaskStatusUpdateSerializer(task, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Task.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error updating task status: {str(e)}", exc_info=True)
+            return Response({'error': f'An error occurred while updating the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
+    
     def list(self, request):
         try:
             queryset = self.get_queryset()
@@ -220,7 +242,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             logger.error(f"Error listing users: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while fetching users: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
     def retrieve(self, request, pk=None):
         try:
             if pk == 'me':
@@ -236,7 +258,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class UserAssignmentsView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)
@@ -257,7 +279,7 @@ class UserAssignmentsView(APIView):
 class UserAssignedBoardsView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)

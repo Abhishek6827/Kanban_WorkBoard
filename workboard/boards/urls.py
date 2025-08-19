@@ -9,7 +9,8 @@ from .views import (
     TaskViewSet,
     UserViewSet,
     UserAssignmentsView,
-    UserAssignedBoardsView
+    UserAssignedBoardsView,
+    TaskStatusUpdateView
 )
 
 router = DefaultRouter()
@@ -25,4 +26,5 @@ urlpatterns = [
     path('csrf/', CSRFTokenView.as_view(), name='csrf_token'),
     path('users/<int:user_id>/assignments/', UserAssignmentsView.as_view(), name='user_assignments'),
     path('users/<int:user_id>/assigned-boards/', UserAssignedBoardsView.as_view(), name='user_assigned_boards'),
+    path('tasks/<int:task_id>/status/', TaskStatusUpdateView.as_view(), name='task_status_update'),
 ]
