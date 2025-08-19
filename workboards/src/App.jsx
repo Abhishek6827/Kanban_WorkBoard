@@ -8,6 +8,7 @@ import SignUp from './pages/SignUp';
 import BoardsList from './pages/BoardsList';
 import BoardDetail from './pages/BoardDetail';
 import CreateBoard from './pages/CreateBoard';
+import TestConnection from './components/TestConnection';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -38,6 +39,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="/test" element={<TestConnection />} />
               <Route 
                 path="/" 
                 element={

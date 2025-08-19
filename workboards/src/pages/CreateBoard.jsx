@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { ArrowLeft, Plus, X, User } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
