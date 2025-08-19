@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.db.models import Q
+from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -199,6 +200,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             return super().destroy(request, *args, **kwargs)
         except PermissionDenied as e:
             return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except Http404:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error deleting task: {str(e)}", exc_info=True)
             return Response({'error': f'An error occurred while deleting the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
