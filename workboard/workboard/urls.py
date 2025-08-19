@@ -1,11 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-from rest_framework.routers import DefaultRouter
-from boards.views import (
-    BoardViewSet, TaskViewSet, UserViewSet,
-    LoginView, LogoutView, CurrentUserView, CSRFTokenView, CustomAuthToken
-)
+from boards.views_web import dashboard
 
 def api_root(request):
     return JsonResponse({
@@ -24,8 +20,9 @@ def api_root(request):
     })
 
 urlpatterns = [
-    path('', api_root, name='api_root'),
+    path('', dashboard, name='dashboard'),
     path('admin/', admin.site.urls),
     path('api/', include('boards.urls')),
     path('api-auth/', include('rest_framework.urls')),
+    path('boards/', include('boards.urls_web')),
 ]
