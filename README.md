@@ -1,4 +1,4 @@
-Kanban Workboard – Django REST Framework + ReactJS
+*Kanban Workboard – Django REST Framework + ReactJS*
 
 A full-stack Kanban board application with drag-and-drop task management and role-based user control.
 
