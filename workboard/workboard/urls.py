@@ -20,6 +20,7 @@ def api_root(request):
     })
 
 urlpatterns = [
+    
     path('', dashboard, name='dashboard'),
     path('admin/', admin.site.urls),
     path('api/', include('boards.urls')),

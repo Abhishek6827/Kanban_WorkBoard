@@ -1,124 +1,305 @@
-# Kanban Workboard – Django REST Framework + ReactJS
+# 🗂️ Kanban Work Board Application
 
-A full-stack Kanban board application with **drag-and-drop task management** and **role-based user control**.  
-Built using **Django REST Framework (backend)** and **ReactJS (frontend)**, this project is designed for scalability and a smooth developer experience.
+<p align="center">
+  <img src="https://img.shields.io/badge/Django-5.1.1-green?style=for-the-badge&logo=django" alt="Django">
+  <img src="https://img.shields.io/badge/DRF-3.14.0-red?style=for-the-badge&logo=django" alt="Django REST Framework">
+  <img src="https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Tailwind-3.3.3-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python" alt="Python">
+</p>
 
----
+<p align="center">
+  <strong>A modern, full‑stack task management application with a beautiful Kanban board and drag‑and‑drop.</strong>
+</p>
 
-## Key Features
+<p align="center">
+  <a href="#-features">Features</a> • 
+  <a href="#-quick-start">Quick Start</a> • 
+  <a href="#-tech-stack">Tech Stack</a> • 
+  <a href="#-usage">Usage</a> • 
+  <a href="#-api-reference">API</a> • 
+  <a href="#-project-structure">Project Structure</a> •
+  <a href="#-deployment">Deployment</a> • 
+  <a href="#-troubleshooting">Troubleshooting</a>
+</p>
 
-- **Drag & Drop Workflow** – Move tasks seamlessly between **To-Do**, **In Progress**, and **Done** columns using React Beautiful DnD.  
-- **Role-Based Access Control** – Admin panel to manage **normal users** and **staff** (create, update, or deactivate accounts).  
-- **Django REST Framework API** – Clean and modular backend providing secure CRUD operations for tasks, boards, and users.  
-- **ReactJS Frontend** – Responsive UI with instant state updates and API integration.  
-- **Scalable Architecture** – Decoupled frontend and backend for easy deployment and maintenance.  
-
----
-
-## Tech Stack
-
-- **Backend:** Django, Django REST Framework  
-- **Frontend:** ReactJS, React Beautiful DnD, Axios  
-- **Database:** PostgreSQL (or SQLite for development)  
-- **Authentication:** JWT / Token-based authentication  
-
----
-
-## Folder Structure
-
-```
-workboard/
-├── workboard/        # Django backend (API)
-└── workboards/       # ReactJS frontend
-```
+<p align="center">
+  <!-- Replace with your own screenshot -->
+  <img src="https://user-images.githubusercontent.com/your-username/your-image-id.png" width="800" alt="Kanban Board Preview">
+</p>
 
 ---
 
-## Setup Instructions
+## ✨ Features
 
-### 1. Clone the Repository
+### 🎯 Core Functionality
+
+- **🔐 Secure Authentication** – User registration, login and logout
+- **📋 Multi‑Board Management** – Create and organize multiple work boards
+- **🧭 Kanban Columns** – To‑Do, In‑Progress and Completed
+- **🎯 Drag & Drop** – Seamless task movement between columns
+- **📝 Task CRUD** – Create, edit and delete tasks
+- **👥 Assignment** – Assign tasks to specific users
+- **⚡ Real‑time UI Updates** – Instant front‑end refresh on changes
+
+### 🎨 UI/UX
+
+- **Clean, Responsive UI** – Built with Tailwind CSS
+- **Helpful Empty/Loading States**
+- **Toast Notifications** – User‑friendly success/error messages
+- **Mobile‑first Layout**
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python** 3.8+
+- **Node.js** 16+
+- **npm** or **yarn**
+
+### Backend Setup (Django)
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd workboard
+# Clone the repository
+git clone https://github.com/your-username/Kanban_WorkBoard.git
+cd Kanban_WorkBoard/workboard
+
+# (Optional) Create and activate a virtual environment
+python -m venv venv
+# Linux/Mac
+source venv/bin/activate
+# Windows (PowerShell)
+# .\\venv\\Scripts\\Activate.ps1
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run database migrations
+python manage.py migrate
+
+# (Optional) Create a superuser
+python manage.py createsuperuser
+
+# Start the Django development server
+python manage.py runserver
+```
+
+The backend will be available at **http://localhost:8000**.
+
+### Frontend Setup (React + Vite)
+
+```bash
+cd ../workboards
+
+# Install Node.js dependencies
+npm install
+
+# Create environment file
+# In the workboards directory, create .env.local with:
+# VITE_API_URL=http://localhost:8000/api
+printf "VITE_API_URL=http://localhost:8000/api\n" > .env.local
+
+# Start the development server
+npm run dev
+```
+
+The frontend will be available at **http://localhost:5173**.
+
+---
+
+## 🧭 Usage
+
+1. Open **http://localhost:5173** in your browser.
+2. Sign up or sign in.
+3. Create your first **Work Board**.
+4. Add tasks and assign them to users.
+5. Drag tasks between **To‑Do**, **In‑Progress**, and **Completed** columns.
+
+---
+
+## 🏗️ Tech Stack
+
+### Backend
+
+|            Technology | Purpose            | Version |
+| --------------------: | ------------------ | :-----: |
+|                Django | Web framework      |  5.1.1  |
+| Django REST Framework | API development    | 3.14.0  |
+|                SQLite | Default database   |   3.x   |
+|                  CORS | Cross‑origin setup |    —    |
+|        Token/JWT Auth | Secure API access  |    —    |
+
+### Frontend
+
+|      Technology | Purpose                                          | Version |
+| --------------: | ------------------------------------------------ | :-----: |
+|           React | UI library                                       | 18.2.0  |
+|            Vite | Build tool/dev server                            |   4.x   |
+|     React Query | Server state mgmt                                |   4.x   |
+|    React Router | Client routing                                   |   6.x   |
+|     Drag & Drop | Kanban DnD (`@dnd-kit` or `react-beautiful-dnd`) |    —    |
+|    Tailwind CSS | Styling                                          |  3.3.3  |
+|    Lucide React | Icons                                            |    —    |
+| React Hot Toast | Notifications                                    |    —    |
+
+> ℹ️ Replace DnD choice above with the one you actually use. Example snippets below use **@dnd-kit**.
+
+---
+
+## 📖 API Reference
+
+### Authentication
+
+| Method | Endpoint         | Description       |
+| :----: | ---------------- | ----------------- |
+|  POST  | `/api/signup/`   | User registration |
+|  POST  | `/api/login/`    | User login        |
+|  POST  | `/api/logout/`   | User logout       |
+|  GET   | `/api/users/me/` | Current user      |
+
+### Boards
+
+| Method | Endpoint            | Description      |
+| :----: | ------------------- | ---------------- |
+|  GET   | `/api/boards/`      | List all boards  |
+|  POST  | `/api/boards/`      | Create new board |
+|  GET   | `/api/boards/{id}/` | Board details    |
+|  PUT   | `/api/boards/{id}/` | Update board     |
+| DELETE | `/api/boards/{id}/` | Delete board     |
+
+### Tasks
+
+| Method | Endpoint                  | Description        |
+| :----: | ------------------------- | ------------------ |
+|  GET   | `/api/tasks/`             | List all tasks     |
+|  POST  | `/api/tasks/`             | Create new task    |
+|  GET   | `/api/tasks/{id}/`        | Task details       |
+|  PUT   | `/api/tasks/{id}/`        | Update task        |
+| DELETE | `/api/tasks/{id}/`        | Delete task        |
+| PATCH  | `/api/tasks/{id}/status/` | Update task status |
+
+---
+
+## 🎮 Usage Examples
+
+### Creating a Board (frontend)
+
+```javascript
+// Example API call
+const createBoard = async (boardData, token) => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/boards/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`, // or `Bearer ${token}` if using JWT
+    },
+    body: JSON.stringify(boardData),
+  });
+  if (!response.ok) throw new Error("Failed to create board");
+  return response.json();
+};
+```
+
+### Drag & Drop (with @dnd-kit)
+
+```jsx
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
+
+<DndContext onDragEnd={handleDragEnd}>
+  <SortableContext items={tasks.map((t) => t.id)}>
+    {tasks.map((task) => (
+      <SortableTask key={task.id} task={task} />
+    ))}
+  </SortableContext>
+</DndContext>;
 ```
 
 ---
 
-### 2. Backend Setup (Django + DRF)
+## 📁 Project Structure
 
-1. Navigate to the backend folder:
-   ```bash
-   cd workboard
-   ```
-
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # macOS / Linux
-   source venv/bin/activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Run migrations and start the server:
-   ```bash
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
-The Django API will be running at:  
-**http://127.0.0.1:8000/**
+```
+Kanban_WorkBoard/
+├── workboard/                 # Django Backend
+│   ├── boards/               # Main app
+│   │   ├── models.py         # Database models
+│   │   ├── views.py          # API views
+│   │   ├── serializers.py    # Data serializers
+│   │   └── urls.py           # API routes
+│   ├── workboard/            # Django project settings
+│   │   ├── settings.py
+│   │   └── urls.py
+│   └── requirements.txt      # Python dependencies
+├── workboards/               # React Frontend
+│   ├── src/
+│   │   ├── components/       # Reusable components
+│   │   ├── pages/            # Page components
+│   │   ├── contexts/         # React contexts
+│   │   └── api/              # API functions
+│   └── package.json
+└── README.md
+```
 
 ---
 
-### 3. Frontend Setup (ReactJS)
+## 🚀 Deployment
 
-1. Open a new terminal window (keep backend running).  
-2. Navigate to the frontend folder:
-   ```bash
-   cd workboards
-   ```
+### Backend (Django)
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+# Example production steps
+export DEBUG=False
+# export DJANGO_SETTINGS_MODULE=workboard.settings  # adjust if you have separate prod settings
 
-4. Start the React development server:
-   ```bash
-   npm start
-   ```
+# Collect static assets
+python manage.py collectstatic --noinput
 
-The React app will be running at:  
-**http://localhost:3000/**
+# Run with your chosen WSGI container (gunicorn/uwsgi) behind a reverse proxy
+# Deploy to platforms like Railway, Render, DigitalOcean, etc.
+```
 
----
+### Frontend (React)
 
-## Usage
+```bash
+# Build for production
+npm run build
 
-- Open **http://localhost:3000/** in your browser.  
-- Register/login as a user to manage your tasks.  
-- Admin users can manage normal users and staff accounts.  
-- Drag tasks between **To-Do → In Progress → Done** columns to update status.  
+# Deploy the dist/ folder (Vercel/Netlify/Railway, etc.)
+```
 
 ---
 
-## API Endpoints (Examples)
+## 🐛 Troubleshooting
 
-- `POST /api/auth/login/` – User login  
-- `POST /api/auth/register/` – User registration  
-- `GET /api/boards/` – Fetch boards  
-- `POST /api/tasks/` – Create task  
-- `PATCH /api/tasks/:id/` – Update task status  
+- **Port already in use**: run `python manage.py runserver 8001`
+- **CORS errors**: verify Django CORS configuration and `VITE_API_URL`
+- **Module not found**: reinstall with `pip install -r requirements.txt` or `npm install`
+- **Auth header mismatch**: ensure `Authorization: Token <token>` or `Authorization: Bearer <jwt>` matches your backend
 
 ---
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the **MIT License** – you are free to use, modify, and distribute it.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/YourFeature`
+3. Commit your changes: `git commit -m "feat: add YourFeature"`
+4. Push: `git push origin feature/YourFeature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is open source and available under the **MIT License** (see `LICENSE`).
+
+---
+
+<p align="center">Made with ❤️ by <strong>Your Name</strong></p>
+<p align="center">
+  <a href="https://github.com/Abhishek6827">GitHub</a> •
+  <a href="www.linkedin.com/in/abhishek-tiwariiii">LinkedIn</a> •
+  <a href="https://x.com/devilizbusyy">Twitter</a>
+</p>

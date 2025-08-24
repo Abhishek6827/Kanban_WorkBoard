@@ -105,22 +105,25 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://your-frontend-domain.railway.app",  # Update this with your frontend URL
 ]
 
-# Add your frontend domain to CORS when deployed
-if not DEBUG:
+# Development CORS settings
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+else:
+    # Production CORS settings
     CORS_ALLOWED_ORIGINS.extend([
         "https://your-frontend-domain.railway.app",  # Replace with actual frontend URL
     ])
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
 
-
-CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_HTTPONLY = False 
 CSRF_COOKIE_SAMESITE = 'Lax' 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
 
-SESSION_COOKIE_SECURE = True 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'  
 

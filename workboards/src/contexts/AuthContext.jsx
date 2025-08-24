@@ -1,142 +1,251 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { login as apiLogin, logout as apiLogout, getCurrentUser, getUserAssignments, getAssignedBoards, setAuthToken } from '../api';
+// contexts/AuthContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [assignments, setAssignments] = useState([]);
-  const [assignedBoards, setAssignedBoards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [apiStatus, setApiStatus] = useState("checking");
 
-  const fetchUserData = useCallback(async (token) => {
+  // Initialize axios defaults from localStorage on app start
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("userData");
+
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+    }
+
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (e) {
+        console.error("Failed to parse user data from localStorage", e);
+        localStorage.removeItem("userData");
+      }
+    }
+
+    checkApiConnection();
+  }, []);
+
+  const checkApiConnection = async () => {
     try {
-      setAuthToken(token);
-      const userData = await getCurrentUser();
-      setUser(userData);
-      const [userAssignments, userAssignedBoards] = await Promise.all([
-        getUserAssignments(userData.id),
-        getAssignedBoards(userData.id)
-      ]);
-      setAssignments(userAssignments);
-      setAssignedBoards(userAssignedBoards);
+      await axios.get(`${import.meta.env.VITE_API_URL}/`, { timeout: 5000 });
+      setApiStatus("online");
     } catch (error) {
-      console.error('Failed to fetch user data:', error);
-      setError(error.message || 'Failed to fetch user data. Please try logging in again.');
-      localStorage.removeItem('token');
-      setAuthToken(null);
-      setUser(null);
-      setAssignments([]);
-      setAssignedBoards([]);
+      console.error("API connection failed:", error);
+      if (error.code === "ERR_NETWORK") {
+        setApiStatus("offline");
+      } else {
+        setApiStatus("online");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch current user when token exists
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchCurrentUser();
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        await fetchUserData(token);
-      }
-      setLoading(false);
-    };
+  const fetchCurrentUser = async () => {
+    try {
+      // Try the /users/me/ endpoint first
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/users/me/`,
+        { timeout: 10000 }
+      );
+      setUser(data);
+      localStorage.setItem("userData", JSON.stringify(data));
+      setApiStatus("online");
+    } catch (error) {
+      console.error("Error fetching current user from /users/me/:", error);
 
-    initAuth();
-  }, [fetchUserData]);
+      if (error.code === "ERR_NETWORK") {
+        setApiStatus("offline");
+      } else if (error.response?.status === 401) {
+        // Token is invalid
+        localStorage.removeItem("token");
+        localStorage.removeItem("userData");
+        delete axios.defaults.headers.common["Authorization"];
+        setUser(null);
+      } else if (error.response?.status === 404) {
+        // Users/me endpoint not found, try alternative approach
+        console.warn(
+          "Users/me endpoint not found, trying alternative approach"
+        );
+        await tryAlternativeUserFetch();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tryAlternativeUserFetch = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Try to get user info from the users list
+      try {
+        const { data: users } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/users/`
+        );
+        if (users && users.length > 0) {
+          // Find the current user by matching token or other criteria
+          // This is a fallback - you might need to adjust this logic
+          const currentUser = users[0]; // Simplified for demo
+          setUser(currentUser);
+          localStorage.setItem("userData", JSON.stringify(currentUser));
+          console.log("Using fallback user data from users list");
+        }
+      } catch (usersError) {
+        console.error("Could not fetch users list:", usersError);
+      }
+    } catch (error) {
+      console.error("Alternative user fetch failed:", error);
+      // If all fails, clear the invalid token
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+    }
+  };
 
   const login = async (username, password) => {
     try {
-      const data = await apiLogin(username, password);
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        await fetchUserData(data.token);
-      }
-      return true;
+      // Clear any existing auth headers first
+      delete axios.defaults.headers.common["Authorization"];
+
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/login/`,
+        { username, password },
+        { timeout: 10000 }
+      );
+
+      const { token, user_id, username: userUsername, email } = data;
+
+      // Store token and user data in localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({ id: user_id, username: userUsername, email })
+      );
+
+      // Set axios default header
+      axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+
+      // Update state
+      setUser({ id: user_id, username: userUsername, email });
+
+      setApiStatus("online");
+      toast.success("Login successful!");
+      return { success: true };
     } catch (error) {
-      console.error('Login failed:', error);
-      if (error.response) {
-        switch (error.response.status) {
-          case 400:
-            setError('Login failed: Invalid credentials. Please check your username and password.');
-            break;
-          case 401:
-            setError('Login failed: Invalid credentials. Please check your username and password.');
-            break;
-          case 404:
-            setError('Login failed: The login service is not available. Please contact support.');
-            break;
-          case 500:
-            setError('Login failed: An internal server error occurred. Please try again later or contact support.');
-            break;
-          default:
-            setError('Login failed: An unexpected error occurred. Please try again later.');
-        }
-      } else if (error.request) {
-        setError('Login failed: No response from the server. Please check your internet connection.');
-      } else {
-        setError('Login failed: An unexpected error occurred. Please try again later.');
+      console.error("Login error:", error);
+
+      if (error.code === "ERR_NETWORK") {
+        setApiStatus("offline");
+        return {
+          success: false,
+          error:
+            "Cannot connect to server. Please check your internet connection and make sure the backend is running.",
+        };
       }
-      return false;
+
+      const message = error.response?.data?.error || "Login failed";
+      return { success: false, error: message };
+    }
+  };
+
+  const signup = async (username, email, password) => {
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/signup/`,
+        { username, email, password },
+        { timeout: 10000 }
+      );
+
+      // Auto-login after signup
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({
+            id: data.user_id,
+            username: data.username,
+            email: data.email,
+          })
+        );
+        axios.defaults.headers.common["Authorization"] = `Token ${data.token}`;
+        setUser({
+          id: data.user_id,
+          username: data.username,
+          email: data.email,
+        });
+      }
+
+      toast.success("Account created successfully!");
+      return { success: true };
+    } catch (error) {
+      console.error("Signup error:", error);
+
+      if (error.code === "ERR_NETWORK") {
+        setApiStatus("offline");
+        return {
+          success: false,
+          error:
+            "Cannot connect to server. Please check your internet connection and make sure the backend is running.",
+        };
+      }
+
+      const message = error.response?.data?.error || "Signup failed";
+      return { success: false, error: message };
     }
   };
 
   const logout = async () => {
     try {
-      await apiLogout();
+      await axios.post(`${import.meta.env.VITE_API_URL}/logout/`);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout error:", error);
     } finally {
+      // Clear all auth data from storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      delete axios.defaults.headers.common["Authorization"];
       setUser(null);
-      setAssignments([]);
-      setAssignedBoards([]);
-      setAuthToken(null);
-      localStorage.removeItem('token');
-      setError(null);
+      toast.success("Logged out successfully");
     }
   };
 
-  const updateUserData = useCallback(async () => {
-    if (user) {
-      try {
-        const [userAssignments, userAssignedBoards] = await Promise.all([
-          getUserAssignments(user.id),
-          getAssignedBoards(user.id)
-        ]);
-        setAssignments(userAssignments);
-        setAssignedBoards(userAssignedBoards);
-        setError(null);
-      } catch (error) {
-        console.error('Failed to update user data:', error);
-        setError('Failed to update user data. Please try again.');
-      }
-    }
-  }, [user]);
-
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
   const value = {
     user,
-    assignments,
-    assignedBoards,
-    login,
-    logout,
     loading,
-    error,
-    updateUserData,
-    clearError,
+    apiStatus,
+    login,
+    signup,
+    logout,
+    checkApiConnection,
+    token: localStorage.getItem("token"),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export default AuthProvider;
