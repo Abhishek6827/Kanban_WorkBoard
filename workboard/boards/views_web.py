@@ -3,15 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.models import User
+from django.db.models import Q
+from django.contrib.auth import get_user_model
+
 from .models import Board, Task
 from .forms import BoardForm, TaskForm
-from django.db.models import Q
+
+User = get_user_model()
+
 
 @login_required
 def dashboard(request):
-    """Dashboard view showing overview of boards and tasks"""
-    user = request.user
+    user = request.user  # Get the current user
     
     # Get counts
     boards_count = Board.objects.filter(owner=user).count()
@@ -180,7 +183,7 @@ def task_status_update(request, task_id):
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
     new_status = request.POST.get('status')
-    if new_status in ['TODO', 'IN_PROGRESS', 'DONE']:
+    if new_status in ['To-Do', 'In Progress', 'Completed']:  # Fixed to match your STATUS_CHOICES
         task.status = new_status
         task.save()
         return JsonResponse({'success': True, 'status': task.status})

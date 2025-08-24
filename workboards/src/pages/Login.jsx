@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Eye, EyeOff, Loader } from "lucide-react";
+import { Eye, EyeOff, Loader, AlertCircle } from "lucide-react";
+import { toast } from "react-hot-toast"; // If you're using react-hot-toast
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); // Add error state
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,17 +20,31 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(""); // Clear previous errors
 
-    const success = await login(formData.username, formData.password);
-    if (success) {
-      navigate("/");
+    try {
+      const success = await login(formData.username, formData.password);
+      if (success) {
+        navigate("/");
+      }
+    } catch (err) {
+      // Handle the error properly
+      const errorMessage =
+        err.message || "An unexpected error occurred during login.";
+      setError(errorMessage);
+
+      // Show alert box
+      alert(`Login Error: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -48,6 +64,17 @@ const Login = () => {
             </Link>
           </p>
         </div>
+
+        {/* Error message display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+              <span className="text-red-800 text-sm">{error}</span>
+            </div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>

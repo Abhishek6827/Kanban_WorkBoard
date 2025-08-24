@@ -83,7 +83,7 @@ python manage.py migrate
 python manage.py createsuperuser
 
 # Start the Django development server
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 The backend will be available at **http://localhost:8000**.

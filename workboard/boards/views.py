@@ -1,3 +1,4 @@
+# boards/views.py
 from django.contrib.auth import authenticate
 from django.db.models import Q
 from rest_framework.views import APIView
@@ -10,14 +11,20 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.decorators import action
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.contrib.auth.models import User
 from django.http import Http404
 from django.middleware.csrf import get_token
 from .models import Board, Task
 from .serializers import BoardSerializer, TaskSerializer, UserSerializer, TaskStatusUpdateSerializer
+from django.contrib.auth import get_user_model
 import logging
+from django.core.cache import cache
+from django.utils import timezone
+
+# Use get_user_model() to get the custom user model
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
@@ -28,20 +35,80 @@ class LoginView(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
         
+        # Input validation
         if not username or not password:
-            return Response({'error': 'Please provide both username and password'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Please provide both username and password'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
+        # Check for empty strings
+        if not username.strip() or not password.strip():
+            return Response(
+                {'error': 'Username and password cannot be empty'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Simple rate limiting (optional)
+        ip_address = self.get_client_ip(request)
+        cache_key = f'login_attempts_{ip_address}'
+        attempts = cache.get(cache_key, 0)
+        
+        if attempts >= 5:  # Allow 5 attempts per IP
+            return Response(
+                {'error': 'Too many login attempts. Please try again later.'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            # Increment attempt counter
+            cache.set(cache_key, attempts + 1, timeout=300)  # 5 minutes
+            return Response(
+                {'error': 'Invalid username or password'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Authenticate the user
         user = authenticate(username=username, password=password)
-        if user:
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({
-                'token': token.key,
-                'user_id': user.pk,
-                'username': user.username,
-                'email': user.email
-            })
+        
+        if user is not None:
+            if user.is_active:
+                # Reset attempt counter on successful login
+                cache.delete(cache_key)
+                
+                token, _ = Token.objects.get_or_create(user=user)
+                return Response({
+                    'token': token.key,
+                    'user_id': user.pk,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name
+                })
+            else:
+                return Response(
+                    {'error': 'Account is disabled'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
         else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            # Increment attempt counter for failed password
+            cache.set(cache_key, attempts + 1, timeout=300)  # 5 minutes
+            return Response(
+                {'error': 'Invalid username or password'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+    
+    def get_client_ip(self, request):
+        """Get the client's IP address for rate limiting"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SignUpView(APIView):
@@ -56,10 +123,12 @@ class SignUpView(APIView):
         if not username or not email or not password:
             return Response({'error': 'Please provide username, email and password'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Check if username already exists
         if User.objects.filter(username=username).exists():
             return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
         
-        if User.objects.filter(email=email).exists():
+        # Check if email already exists (case-insensitive)
+        if User.objects.filter(email__iexact=email).exists():
             return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -135,17 +204,48 @@ class BoardViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
     
+    def create(self, request, *args, **kwargs):
+        # Remove owner from request data if present
+        request_data = request.data.copy()
+        if 'owner' in request_data:
+            del request_data['owner']
+        
+        serializer = self.get_serializer(data=request_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             if instance.owner != request.user:
                 raise PermissionDenied("You don't have permission to edit this board")
-            return super().update(request, *args, **kwargs)
+            
+            # Remove owner from request data if present
+            request_data = request.data.copy()
+            if 'owner' in request_data:
+                del request_data['owner']
+            
+            # Use partial=True for PATCH requests
+            partial = kwargs.pop('partial', False)
+            serializer = self.get_serializer(instance, data=request_data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            
+            return Response(serializer.data)
+            
         except PermissionDenied as e:
             return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error updating board: {str(e)}")
             return Response({'error': f'An error occurred while updating the board: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
         try:
@@ -158,12 +258,11 @@ class BoardViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error deleting board: {str(e)}")
             return Response({'error': f'An error occurred while deleting the board: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 class TaskViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = TaskSerializer
-    queryset = Task.objects.all()  # This is required for DRF router
+    queryset = Task.objects.all()
     
     def get_queryset(self):
         user = self.request.user
@@ -172,19 +271,27 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
     
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            user = request.user
-            if user == instance.board.owner or user == instance.assignee or user == instance.created_by:
-                return super().update(request, *args, **kwargs)
-            else:
-                raise PermissionDenied("You don't have permission to edit this task")
-        except PermissionDenied as e:
-            return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            logger.error(f"Error updating task: {str(e)}")
-            return Response({'error': f'An error occurred while updating the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # boards/views.py - TaskViewSet update method
+def update(self, request, *args, **kwargs):
+    try:
+        instance = self.get_object()
+        user = request.user
+        
+        if user == instance.board.owner or user == instance.assignee or user == instance.created_by:
+            return super().update(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You don't have permission to edit this task")
+    
+    except PermissionDenied as e:
+        return Response({'error': str(e)}, status=status.HTTP_403_FORBIDDEN)
+    
+    except ValidationError as e:
+        # Return validation errors directly without wrapping
+        return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        logger.error(f"Error updating task {instance.id if 'instance' in locals() else 'unknown'}: {str(e)}")
+        return Response({'error': 'An unexpected error occurred while updating the task.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def destroy(self, request, *args, **kwargs):
         try:
@@ -199,6 +306,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error deleting task: {str(e)}")
             return Response({'error': f'An error occurred while deleting the task: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class TaskStatusUpdateView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]

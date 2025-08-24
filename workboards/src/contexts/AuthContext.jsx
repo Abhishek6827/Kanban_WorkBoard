@@ -157,21 +157,20 @@ export const AuthProvider = ({ children }) => {
 
       setApiStatus("online");
       toast.success("Login successful!");
-      return { success: true };
+      return true; // Return simple boolean for success
     } catch (error) {
       console.error("Login error:", error);
 
+      // Throw the error instead of returning an object
       if (error.code === "ERR_NETWORK") {
         setApiStatus("offline");
-        return {
-          success: false,
-          error:
-            "Cannot connect to server. Please check your internet connection and make sure the backend is running.",
-        };
+        throw new Error(
+          "Cannot connect to server. Please check your internet connection and make sure the backend is running."
+        );
       }
 
       const message = error.response?.data?.error || "Login failed";
-      return { success: false, error: message };
+      throw new Error(message); // Throw error instead of returning object
     }
   };
 

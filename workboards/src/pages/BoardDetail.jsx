@@ -107,7 +107,30 @@ const BoardDetail = () => {
     },
   });
 
-  // src/pages/BoardDetail.jsx - Update the updateTaskMutation
+  // src/pages/BoardDetail.jsx - Add this mutation
+  const updateBoardMutation = useMutation({
+    mutationFn: async (boardData) => {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/boards/${boardId}/`,
+        boardData
+      );
+      return response.data;
+    },
+    onSuccess: (updatedBoard) => {
+      queryClient.setQueryData(["board", boardId], updatedBoard);
+      toast.success("Board updated successfully!");
+    },
+    onError: (error) => {
+      console.error("Error updating board:", error);
+      toast.error(error.response?.data?.error || "Failed to update board");
+    },
+  });
+
+  // Add this function
+  const handleUpdateBoard = (boardData) => {
+    updateBoardMutation.mutate(boardData);
+  };
+
   const updateTaskMutation = useMutation({
     mutationFn: async (taskData) => {
       // Prepare data for API - include the board ID
@@ -133,7 +156,24 @@ const BoardDetail = () => {
     },
     onError: (error) => {
       console.error("Error updating task:", error.response?.data);
-      toast.error(error.response?.data?.error || "Failed to update task");
+
+      // Handle different error response structures
+      if (error.response?.data?.assignee_email) {
+        // Specific error for assignee_email
+        toast.error(`Assignee error: ${error.response.data.assignee_email}`);
+      } else if (error.response?.data?.error) {
+        // Generic error message
+        toast.error(error.response.data.error);
+      } else if (error.response?.data?.detail) {
+        // Another common error format
+        toast.error(error.response.data.detail);
+      } else if (typeof error.response?.data === "string") {
+        // String error response
+        toast.error(error.response.data);
+      } else {
+        // Fallback error message
+        toast.error("Failed to update task");
+      }
     },
   });
   const deleteTaskMutation = useMutation({
@@ -264,6 +304,7 @@ const BoardDetail = () => {
         board={board}
         onBack={() => navigate("/")}
         onDeleteBoard={handleDeleteBoard}
+        onUpdateBoard={handleUpdateBoard} // Add this prop
         canDelete={canDeleteBoard}
       />
 
