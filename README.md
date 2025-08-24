@@ -293,11 +293,11 @@ npm run build
 
 ## 📄 License
 
-This project is open source and available under the **MIT License** (see `LICENSE`).
+This project is open source and available under the **MIT License**.
 
 ---
 
-<p align="center">Made with ❤️ by <strong>Your Name</strong></p>
+<p align="center">Made with ❤️ by <strong>Abhishek</strong></p>
 <p align="center">
   <a href="https://github.com/Abhishek6827">GitHub</a> •
   <a href="www.linkedin.com/in/abhishek-tiwariiii">LinkedIn</a> •
