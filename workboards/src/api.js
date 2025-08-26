@@ -1,9 +1,12 @@
-// api.js
 import axios from "axios";
 
+// IMPORTANT: Change this to your PythonAnywhere URL
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
-  : "http://localhost:8000/api";
+  : "https://abhishektiwari6827.pythonanywhere.com/api"; // Default fallback
+
+console.log("API Base URL:", API_URL);
+console.log("Environment:", import.meta.env.VITE_APP_ENV);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,7 +16,7 @@ const api = axios.create({
 export const setAuthToken = (token) => {
   if (token) {
     localStorage.setItem("token", token);
-    api.defaults.headers.common["Authorization"] = `Token ${token}`; // Fixed: Token not Bearer
+    api.defaults.headers.common["Authorization"] = `Token ${token}`;
   } else {
     localStorage.removeItem("token");
     delete api.defaults.headers.common["Authorization"];
@@ -24,7 +27,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
-      config.headers.Authorization = `Token ${token}`; // Fixed: Token not Bearer
+      config.headers.Authorization = `Token ${token}`;
     }
     return config;
   },
@@ -45,7 +48,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 404) {
       console.warn("Resource not found:", error.config.url);
-      return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: null });
     }
 
     if (error.response?.status === 500) {
@@ -71,6 +74,7 @@ api.interceptors.response.use(
   }
 );
 
+// API functions remain the same...
 export const login = async (credentials) => {
   try {
     const response = await api.post("/login/", credentials);
