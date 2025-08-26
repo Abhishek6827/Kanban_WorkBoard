@@ -1,0 +1,7 @@
+{
+    "extends": ["eslint:recommended", "plugin:react/recommended"],
+    "rules": {
+    "react/forbid-foreign-prop-types": "off"
+    }
+  }
+  
