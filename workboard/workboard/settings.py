@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,12 +10,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'K0vAf2qZ6dY78LsPLPkiRy1gZ-nGunoUUQvIX
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'abhishektiwari6827.pythonanywhere.com',
-    'abhishek6827.github.io', 
-    'localhost',
-    '127.0.0.1'
-]
+ALLOWED_HOSTS = ['abhishektiwari6827.pythonanywhere.com', 'abhishek6827.github.io','localhost', '127.0.0.1']
+# Fixed ALLOWED_HOSTS - removed extra quotes and corrected syntax
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,AbhishekTiwari6827.pythonanywhere.com,abhishektiwari6827.pythonanywhere.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -33,7 +31,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -43,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'workboard.urls'  
+ROOT_URLCONF = 'workboard.urls'
 
 TEMPLATES = [
     {
@@ -61,7 +59,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'workboard.wsgi.application' 
+WSGI_APPLICATION = 'workboard.wsgi.application'
 
 # Database
 DATABASES = {
@@ -109,56 +107,60 @@ CORS_ALLOWED_ORIGINS = [
     "https://abhishek6827.github.io",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://abhishektiwari6827.github.io",  # Added GitHub Pages
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://abhishektiwari6827.pythonanywhere.com",  # Added PythonAnywhere
+    "https://AbhishekTiwari6827.pythonanywhere.com",  # Added PythonAnywhere
 ]
 CORS_ALLOW_CREDENTIALS = False
 
 
-# Development CORS settings
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-else:
-    # Production CORS settings
-    CORS_ALLOWED_ORIGINS.extend([
-        "https://your-frontend-domain.railway.app",  # Replace with actual frontend URL
-    ])
+# Security settings for production
+if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
 CSRF_COOKIE_HTTPONLY = False 
 CSRF_COOKIE_SAMESITE = 'Lax' 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    "https://abhishek6827.github.io"
+    "https://abhishek6827.github.io",
     "https://abhishektiwari6827.pythonanywhere.com",
     ]
 
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'  
-
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
-from datetime import timedelta
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
+
 AUTH_USER_MODEL = 'boards.CustomUser'
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    # ... any other authentication backends you're using
 ]
 
 APPEND_SLASH = False
@@ -170,4 +172,16 @@ CORS_ALLOW_METHODS = [
     'PATCH',
     'POST',
     'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]

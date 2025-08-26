@@ -1,34 +1,13 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import (
-    LoginView,
-    LogoutView,
-    SignUpView,
-    CurrentUserView,
-    CSRFTokenView,
-    APIRootView,
-    BoardViewSet,
-    TaskViewSet,
-    UserViewSet,
-    UserAssignmentsView,
-    UserAssignedBoardsView,
-    TaskStatusUpdateView
-)
-
-router = DefaultRouter()
-router.register(r'boards', BoardViewSet)
-router.register(r'tasks', TaskViewSet)
-router.register(r'users', UserViewSet)
+from django.urls import path
+from . import views_web
 
 urlpatterns = [
-    path('', APIRootView.as_view(), name='api-root'),
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('signup/', SignUpView.as_view(), name='signup'),
-    path('csrf/', CSRFTokenView.as_view(), name='csrf-token'),
-    path('users/me/', CurrentUserView.as_view(), name='current-user'),
-    path('users/<int:user_id>/assignments/', UserAssignmentsView.as_view(), name='user-assignments'),
-    path('users/<int:user_id>/assigned-boards/', UserAssignedBoardsView.as_view(), name='user-assigned-boards'),
-    path('tasks/<int:task_id>/status/', TaskStatusUpdateView.as_view(), name='task-status-update'),
-    path('', include(router.urls)),
+    path('', views_web.dashboard, name='dashboard'),
+    path('boards/', views_web.boards_list, name='boards_list'),
+    path('boards/<int:board_id>/', views_web.board_detail, name='board_detail'),
+    path('tasks/', views_web.tasks_list, name='tasks_list'),
+    path('boards/create/', views_web.board_create, name='board_create'),
+    path('boards/<int:board_id>/edit/', views_web.board_edit, name='board_edit'),
+    path('tasks/create/', views_web.task_create, name='task_create'),
+    path('tasks/<int:task_id>/edit/', views_web.task_edit, name='task_edit'),
 ]
