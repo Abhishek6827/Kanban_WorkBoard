@@ -1,4 +1,3 @@
-# boards/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
@@ -17,9 +16,9 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'boards', BoardViewSet, basename='board')
-router.register(r'tasks', TaskViewSet, basename='task')  # Added basename
-router.register(r'users', UserViewSet, basename='user')  # Added basename
+router.register(r'boards', BoardViewSet)
+router.register(r'tasks', TaskViewSet)
+router.register(r'users', UserViewSet)
 
 urlpatterns = [
     path('', APIRootView.as_view(), name='api-root'),

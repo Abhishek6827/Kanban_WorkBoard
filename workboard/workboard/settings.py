@@ -7,10 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'K0vAf2qZ6dY78LsPLPkiRy1gZ-nGunoUUQvIXl8K4i2n6RsSQf_6ax0YcrFkuFctTRk')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['abhishektiwari6827.pythonanywhere.com', 'abhishek6827.github.io','localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -101,11 +100,13 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/admin/login/'
 
 # CORS settings
-CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "https://abhishek6827.github.io",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+CORS_ALLOW_CREDENTIALS = False
+
 
 # Development CORS settings
 if DEBUG:
@@ -122,7 +123,12 @@ else:
 
 CSRF_COOKIE_HTTPONLY = False 
 CSRF_COOKIE_SAMESITE = 'Lax' 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    "https://abhishek6827.github.io"
+    "https://abhishektiwari6827.pythonanywhere.com",
+    ]
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'  

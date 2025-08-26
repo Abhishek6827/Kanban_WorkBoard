@@ -11,6 +11,12 @@ from .forms import BoardForm, TaskForm
 
 User = get_user_model()
 
+def handler404(request, exception):
+    return redirect('home')
+
+def handler500(request):
+    return redirect('home')
+
 
 @login_required
 def dashboard(request):

@@ -1,5 +1,5 @@
 import {
-  BrowserRouter as Router,
+  HashRouter as Router, // Change this line
   Routes,
   Route,
   Navigate,
@@ -32,7 +32,9 @@ const PrivateRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Router>
+        {" "}
+        {/* Remove the future prop - HashRouter doesn't need it */}
         <div className="min-h-screen bg-gray-50">
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -70,7 +72,8 @@ function App() {
               }
             />
             <Route path="/test" element={<TestConnection />} />
-            <Route path="*" element={<div>404 - Page Not Found</div>} />
+            <Route path="*" element={<Navigate to="/" replace />} />{" "}
+            {/* Better 404 handling */}
           </Routes>
           <Toaster
             position="top-right"

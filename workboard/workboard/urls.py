@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-from boards.views_web import dashboard
+from boards.views_web import dashboard, boards_list, tasks_list, board_create, board_edit, task_create, task_edit  # Import all views
 
 def api_root(request):
     return JsonResponse({
@@ -20,10 +20,28 @@ def api_root(request):
     })
 
 urlpatterns = [
+    # Homepage - Dashboard
+    path('', dashboard, name='home'),
     
-    path('', dashboard, name='dashboard'),
+    # Web pages
+    path('dashboard/', dashboard, name='dashboard'),
+    path('boards/', boards_list, name='boards_list'),
+    path('tasks/', tasks_list, name='tasks_list'),
+    path('boards/create/', board_create, name='board_create'),
+    path('boards/<int:board_id>/edit/', board_edit, name='board_edit'),
+    path('tasks/create/', task_create, name='task_create'),
+    path('tasks/<int:task_id>/edit/', task_edit, name='task_edit'),
+    
+    # Admin
     path('admin/', admin.site.urls),
+    
+    # API routes
     path('api/', include('boards.urls')),
+    
+    # REST framework auth
     path('api-auth/', include('rest_framework.urls')),
-    path('boards/', include('boards.urls_web')),
 ]
+
+# Add error handlers
+handler404 = 'boards.views_web.handler404'
+handler500 = 'boards.views_web.handler500'
