@@ -9,7 +9,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'K0vAf2qZ6dY78LsPLPkiRy1gZ-nGunoUUQvIX
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['abhishektiwari6827.pythonanywhere.com', 'abhishek6827.github.io','localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'abhishektiwari6827.pythonanywhere.com',
+    'abhishek6827.github.io', 
+    'localhost',
+    '127.0.0.1'
+]
 
 # Application definition
 INSTALLED_APPS = [
