@@ -300,6 +300,6 @@ This project is open source and available under the **MIT License**.
 <p align="center">Made with ❤️ by <strong>Abhishek</strong></p>
 <p align="center">
   <a href="https://github.com/Abhishek6827">GitHub</a> •
-  <a href="www.linkedin.com/in/abhishek-tiwariiii">LinkedIn</a> •
+  <a href="https://linkedin.com/in/abhishek-tiwariiii">LinkedIn</a> •
   <a href="https://x.com/devilizbusyy">Twitter</a>
 </p>
