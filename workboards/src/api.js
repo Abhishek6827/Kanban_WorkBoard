@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// FIXED: Simple hardcoded URL for production (GitHub Pages)
 const API_URL = "https://abhishektiwari6827.pythonanywhere.com/api";
 
 console.log("API Base URL:", API_URL);
@@ -230,7 +229,7 @@ export const createTask = async (taskData) => {
     console.log("Creating task with data:", taskData);
     const payload = {
       ...taskData,
-      assignee: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
+      assignee_id: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
     };
     console.log("Sending task payload:", payload);
     const response = await api.post("/tasks/", payload);
@@ -250,10 +249,12 @@ export const updateTask = async (taskId, taskData) => {
     console.log(`Updating task ${taskId}:`, taskData);
     const payload = {
       ...taskData,
-      assignee: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
+      assignee_id: taskData.assignee_id
+        ? parseInt(taskData.assignee_id, 10)
+        : null,
     };
     console.log("Sending task update payload:", payload);
-    const response = await api.patch(`/tasks/${taskId}/`, payload);
+    const response = await api.put(`/tasks/${taskId}/`, payload);
     console.log("Task updated successfully:", response.data);
     return response.data;
   } catch (error) {
@@ -298,7 +299,7 @@ export const getBoards = async () => {
 export const updateBoard = async (id, boardData) => {
   try {
     console.log(`Updating board ${id}:`, boardData);
-    const response = await api.patch(`/boards/${id}/`, boardData);
+    const response = await api.put(`/boards/${id}/`, boardData);
     console.log("Board updated successfully:", response.data);
     return response.data;
   } catch (error) {
