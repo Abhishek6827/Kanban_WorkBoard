@@ -1,14 +1,16 @@
 import axios from "axios";
 
-const API_URL = "https://abhishektiwari6827.pythonanywhere.com/api";
+// IMPORTANT: Change this to your PythonAnywhere URL
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : "https://abhishektiwari6827.pythonanywhere.com/api"; // Default fallback
 
 console.log("API Base URL:", API_URL);
-console.log("Deployment: GitHub Pages + PythonAnywhere");
+console.log("Environment:", import.meta.env.VITE_APP_ENV);
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: false,
-  timeout: 15000,
 });
 
 export const setAuthToken = (token) => {
