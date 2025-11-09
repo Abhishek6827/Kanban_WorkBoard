@@ -3,7 +3,7 @@ import axios from "axios";
 // IMPORTANT: Change this to your PythonAnywhere URL
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
-  : "https://abhishektiwari6827.pythonanywhere.com/api"; // Default fallback
+  : "https://abhishektiwari6827.pythonanywhere.com/api/"; // Default fallback
 
 console.log("API Base URL:", API_URL);
 console.log("Environment:", import.meta.env.VITE_APP_ENV);
