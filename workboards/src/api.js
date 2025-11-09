@@ -1,16 +1,15 @@
 import axios from "axios";
 
-// IMPORTANT: Change this to your PythonAnywhere URL
-const API_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : "https://abhishektiwari6827.pythonanywhere.com/api"; // Default fallback
+// FIXED: Simple hardcoded URL for production (GitHub Pages)
+const API_URL = "https://abhishektiwari6827.pythonanywhere.com/api";
 
 console.log("API Base URL:", API_URL);
-console.log("Environment:", import.meta.env.VITE_APP_ENV);
+console.log("Deployment: GitHub Pages + PythonAnywhere");
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: false,
+  timeout: 15000,
 });
 
 export const setAuthToken = (token) => {
@@ -231,7 +230,7 @@ export const createTask = async (taskData) => {
     console.log("Creating task with data:", taskData);
     const payload = {
       ...taskData,
-      assignee_id: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
+      assignee: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
     };
     console.log("Sending task payload:", payload);
     const response = await api.post("/tasks/", payload);
@@ -251,12 +250,10 @@ export const updateTask = async (taskId, taskData) => {
     console.log(`Updating task ${taskId}:`, taskData);
     const payload = {
       ...taskData,
-      assignee_id: taskData.assignee_id
-        ? parseInt(taskData.assignee_id, 10)
-        : null,
+      assignee: taskData.assignee ? parseInt(taskData.assignee, 10) : null,
     };
     console.log("Sending task update payload:", payload);
-    const response = await api.put(`/tasks/${taskId}/`, payload);
+    const response = await api.patch(`/tasks/${taskId}/`, payload);
     console.log("Task updated successfully:", response.data);
     return response.data;
   } catch (error) {
@@ -301,7 +298,7 @@ export const getBoards = async () => {
 export const updateBoard = async (id, boardData) => {
   try {
     console.log(`Updating board ${id}:`, boardData);
-    const response = await api.put(`/boards/${id}/`, boardData);
+    const response = await api.patch(`/boards/${id}/`, boardData);
     console.log("Board updated successfully:", response.data);
     return response.data;
   } catch (error) {
