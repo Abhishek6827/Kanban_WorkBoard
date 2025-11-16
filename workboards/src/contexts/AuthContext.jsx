@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URL } from "../api";
 
 const AuthContext = createContext();
 
@@ -41,7 +42,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkApiConnection = async () => {
     try {
-      await axios.get(`${import.meta.env.VITE_API_URL}/`, { timeout: 5000 });
+      await axios.get(`${API_URL}/`, { timeout: 5000 });
       setApiStatus("online");
     } catch (error) {
       console.error("API connection failed:", error);
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Try the /users/me/ endpoint first
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/users/me/`,
+        `${API_URL}/users/me/`,
         { timeout: 10000 }
       );
       setUser(data);
@@ -106,7 +107,7 @@ export const AuthProvider = ({ children }) => {
       // Try to get user info from the users list
       try {
         const { data: users } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users/`
+          `${API_URL}/users/`
         );
         if (users && users.length > 0) {
           // Find the current user by matching token or other criteria
@@ -135,7 +136,7 @@ export const AuthProvider = ({ children }) => {
       delete axios.defaults.headers.common["Authorization"];
 
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/login/`,
+        `${API_URL}/login/`,
         { username, password },
         { timeout: 10000 }
       );
@@ -177,7 +178,7 @@ export const AuthProvider = ({ children }) => {
   const signup = async (username, email, password) => {
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/signup/`,
+        `${API_URL}/signup/`,
         { username, email, password },
         { timeout: 10000 }
       );
@@ -222,7 +223,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/logout/`);
+      await axios.post(`${API_URL}/logout/`);
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

@@ -32,6 +32,38 @@ export const TaskCard = ({ task, onDelete, onUpdate, canEdit }) => {
     transition: isDragging ? "none" : transition,
   };
 
+  // Custom drag listeners that ignore button clicks
+  const customListeners = {
+    ...listeners,
+    onPointerDown: (event) => {
+      // Check if the click target is a button or inside a button
+      const target = event.target;
+      const isButton = target.closest('button') !== null;
+      
+      if (!isButton && listeners.onPointerDown) {
+        listeners.onPointerDown(event);
+      }
+    },
+    onMouseDown: (event) => {
+      // Check if the click target is a button or inside a button
+      const target = event.target;
+      const isButton = target.closest('button') !== null;
+      
+      if (!isButton && listeners.onMouseDown) {
+        listeners.onMouseDown(event);
+      }
+    },
+    onTouchStart: (event) => {
+      // Check if the touch target is a button or inside a button
+      const target = event.target;
+      const isButton = target.closest('button') !== null;
+      
+      if (!isButton && listeners.onTouchStart) {
+        listeners.onTouchStart(event);
+      }
+    },
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "To-Do":
@@ -67,7 +99,7 @@ export const TaskCard = ({ task, onDelete, onUpdate, canEdit }) => {
       <div
         ref={setNodeRef}
         style={style}
-        className="bg-white border-2 border-blue-300 rounded-xl p-4 mb-4 shadow-lg"
+        className="bg-white border-2 border-blue-400 rounded-2xl p-5 mb-4 shadow-large animate-scale-in"
       >
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-2 flex-1">
@@ -143,53 +175,57 @@ export const TaskCard = ({ task, onDelete, onUpdate, canEdit }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab active:cursor-grabbing ${
-        isDragging ? "opacity-50 rotate-2 shadow-xl" : ""
+      className={`group bg-white border border-gray-200/50 rounded-2xl p-5 mb-4 shadow-soft hover:shadow-large transition-all duration-300 cursor-grab active:cursor-grabbing transform hover:-translate-y-0.5 ${
+        isDragging ? "opacity-60 rotate-3 shadow-colored scale-105 z-50" : ""
       }`}
       {...attributes}
-      {...listeners}
+      {...customListeners}
     >
       {/* Status indicator */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-soft transition-all duration-200 ${getStatusColor(
             task.status
           )}`}
         >
           {task.status}
         </span>
         {task.assignee && (
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1.5 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200/50">
             <Mail className="w-3 h-3 text-blue-500" />
-            <span className="text-xs text-gray-500">{task.assignee.email}</span>
+            <span className="text-xs text-gray-600 font-medium">{task.assignee.email}</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2 flex-1">
-          <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
-          <h4 className="font-semibold text-gray-900 text-lg leading-tight">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3 flex-1">
+          <GripVertical className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors duration-200" />
+          <h4 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors duration-200">
             {task.title}
           </h4>
         </div>
         {canEdit && (
-          <div className="flex space-x-1">
+          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 setIsEditing(true);
               }}
-              className="text-blue-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50"
+              className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition-all duration-200 transform hover:scale-110 active:scale-95"
+              title="Edit task"
             >
               <Edit3 className="w-4 h-4" />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onDelete(task.id);
               }}
-              className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50"
+              className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 transform hover:scale-110 active:scale-95"
+              title="Delete task"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -203,22 +239,22 @@ export const TaskCard = ({ task, onDelete, onUpdate, canEdit }) => {
         </p>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3 pt-3 border-t border-gray-100">
         {task.assignee && (
-          <div className="flex items-center text-sm text-gray-500">
-            <User className="w-4 h-4 mr-2 text-blue-500" />
-            <span className="font-medium">{task.assignee.username}</span>
+          <div className="flex items-center text-sm bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 rounded-lg border border-blue-100/50">
+            <User className="w-4 h-4 mr-2 text-blue-600" />
+            <span className="font-semibold text-gray-700">{task.assignee.username}</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          <div className="flex items-center">
-            <Calendar className="w-3 h-3 mr-1" />
-            <span>{new Date(task.created_at).toLocaleDateString()}</span>
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center space-x-1.5 bg-gray-50 px-2 py-1.5 rounded-lg">
+            <Calendar className="w-3 h-3 text-gray-400" />
+            <span className="font-medium">{new Date(task.created_at).toLocaleDateString()}</span>
           </div>
-          <div className="flex items-center">
-            <Clock className="w-3 h-3 mr-1" />
-            <span>{new Date(task.updated_at).toLocaleDateString()}</span>
+          <div className="flex items-center space-x-1.5 bg-gray-50 px-2 py-1.5 rounded-lg">
+            <Clock className="w-3 h-3 text-gray-400" />
+            <span className="font-medium">{new Date(task.updated_at).toLocaleDateString()}</span>
           </div>
         </div>
       </div>

@@ -20,8 +20,16 @@ const PrivateRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto shadow-medium"></div>
+            <div className="absolute inset-0 rounded-full bg-blue-600 opacity-20 animate-pulse"></div>
+          </div>
+          <p className="mt-6 text-lg text-gray-700 font-semibold animate-pulse">
+            Loading...
+          </p>
+        </div>
       </div>
     );
   }
@@ -32,10 +40,13 @@ const PrivateRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        {" "}
-        {/* Remove the future prop - HashRouter doesn't need it */}
-        <div className="min-h-screen bg-gray-50">
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <div className="min-h-screen">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
@@ -72,14 +83,34 @@ function App() {
               }
             />
             <Route path="/test" element={<TestConnection />} />
-            <Route path="*" element={<Navigate to="/" replace />} />{" "}
-            {/* Better 404 handling */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
-              style: { background: "#363636", color: "#fff" },
+              style: {
+                background: "rgba(255, 255, 255, 0.95)",
+                color: "#1f2937",
+                border: "1px solid rgba(229, 231, 235, 0.8)",
+                borderRadius: "12px",
+                boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 20px 50px -10px rgba(0, 0, 0, 0.1)",
+                padding: "16px",
+                fontSize: "14px",
+                fontWeight: "500",
+              },
+              success: {
+                iconTheme: {
+                  primary: "#10b981",
+                  secondary: "#fff",
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: "#ef4444",
+                  secondary: "#fff",
+                },
+              },
             }}
           />
         </div>

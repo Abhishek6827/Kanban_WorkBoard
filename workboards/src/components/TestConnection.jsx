@@ -3,6 +3,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
+import { API_URL } from "../api";
 
 const TestConnection = () => {
   const [status, setStatus] = useState("");
@@ -14,10 +15,10 @@ const TestConnection = () => {
     setError("");
 
     try {
-      console.log("API URL:", import.meta.env.VITE_API_URL);
+      console.log("API URL:", API_URL);
       console.log("Token:", token);
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/`);
+      const response = await axios.get(`${API_URL}/`);
       setStatus(`✅ API Connected! Response: ${JSON.stringify(response.data)}`);
     } catch (err) {
       setError(`❌ API Error: ${err.message}`);
@@ -31,7 +32,7 @@ const TestConnection = () => {
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/users/me/`,
+        `${API_URL}/users/me/`,
         {
           headers: {
             Authorization: token ? `Token ${token}` : "",
@@ -57,7 +58,7 @@ const TestConnection = () => {
 
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/boards/`,
+        `${API_URL}/boards/`,
         {
           headers: {
             Authorization: token ? `Token ${token}` : "",
@@ -84,7 +85,7 @@ const TestConnection = () => {
     try {
       // First get boards to find a task
       const boardsResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/boards/`,
+        `${API_URL}/boards/`,
         {
           headers: {
             Authorization: token ? `Token ${token}` : "",
@@ -107,7 +108,7 @@ const TestConnection = () => {
       const newStatus = task.status === "To-Do" ? "In Progress" : "To-Do";
 
       const response = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/tasks/${task.id}/status/`,
+        `${API_URL}/tasks/${task.id}/status/`,
         { status: newStatus },
         {
           headers: {
@@ -174,8 +175,8 @@ const TestConnection = () => {
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="font-semibold mb-2">Environment Variables:</h3>
             <p>
-              <strong>VITE_API_URL:</strong>{" "}
-              {import.meta.env.VITE_API_URL || "Not set"}
+              <strong>API_URL:</strong>{" "}
+              {API_URL || "Not set"}
             </p>
             <p>
               <strong>Token:</strong> {token ? "Present" : "Not found"}

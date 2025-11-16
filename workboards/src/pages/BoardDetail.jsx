@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../api";
 import {
   DndContext,
   useSensor,
@@ -17,6 +18,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useAuth } from "../contexts/AuthContext";
 import { BoardHeader } from "../components/BoardHeader";
 import { StatusColumn } from "../components/StatusColumn";
+import { GripVertical } from "lucide-react";
 
 const BoardDetail = () => {
   const { boardId } = useParams();
@@ -42,7 +44,7 @@ const BoardDetail = () => {
     queryKey: ["board", boardId],
     queryFn: async () => {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/boards/${boardId}/`
+        `${API_URL}/boards/${boardId}/`
       );
       return response.data;
     },
@@ -54,7 +56,7 @@ const BoardDetail = () => {
   const updateTaskStatusMutation = useMutation({
     mutationFn: async ({ taskId, status }) => {
       const response = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/tasks/${taskId}/`,
+        `${API_URL}/tasks/${taskId}/`,
         { status }
       );
       return response.data;
@@ -83,7 +85,7 @@ const BoardDetail = () => {
       };
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/tasks/`,
+        `${API_URL}/tasks/`,
         payload,
         {
           headers: {
@@ -111,7 +113,7 @@ const BoardDetail = () => {
   const updateBoardMutation = useMutation({
     mutationFn: async (boardData) => {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/boards/${boardId}/`,
+        `${API_URL}/boards/${boardId}/`,
         boardData
       );
       return response.data;
@@ -145,7 +147,7 @@ const BoardDetail = () => {
       console.log("Updating task with payload:", payload);
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/tasks/${taskData.id}/`,
+        `${API_URL}/tasks/${taskData.id}/`,
         payload
       );
       return response.data;
@@ -178,7 +180,7 @@ const BoardDetail = () => {
   });
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId) => {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/`);
+      await axios.delete(`${API_URL}/tasks/${taskId}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
@@ -192,7 +194,7 @@ const BoardDetail = () => {
 
   const deleteBoardMutation = useMutation({
     mutationFn: async () => {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/boards/${boardId}/`);
+      await axios.delete(`${API_URL}/boards/${boardId}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boards"] });
@@ -273,24 +275,35 @@ const BoardDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto shadow-medium"></div>
+            <div className="absolute inset-0 rounded-full bg-blue-600 opacity-20 animate-pulse"></div>
+          </div>
+          <p className="mt-6 text-lg text-gray-700 font-semibold animate-pulse">
+            Loading board...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!board) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-4 animate-fade-in">
+        <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center mb-6 shadow-medium">
+          <span className="text-5xl">📋</span>
+        </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Board Not Found
         </h2>
-        <p className="text-gray-600 mb-6">
-          The board you're looking for doesn't exist.
+        <p className="text-gray-600 mb-8 text-center max-w-md">
+          The board you're looking for doesn't exist or you don't have access to it.
         </p>
         <button
           onClick={() => navigate("/")}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold transform hover:scale-105 hover:shadow-medium active:scale-95 shadow-soft"
         >
           Back to Boards
         </button>
@@ -299,16 +312,16 @@ const BoardDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <BoardHeader
         board={board}
         onBack={() => navigate("/")}
         onDeleteBoard={handleDeleteBoard}
-        onUpdateBoard={handleUpdateBoard} // Add this prop
+        onUpdateBoard={handleUpdateBoard}
         canDelete={canDeleteBoard}
       />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -316,32 +329,45 @@ const BoardDetail = () => {
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {["To-Do", "In Progress", "Completed"].map((status) => (
-              <StatusColumn
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            {["To-Do", "In Progress", "Completed"].map((status, index) => (
+              <div
                 key={status}
-                status={status}
-                tasks={getTasksByStatus(status)}
-                onDeleteTask={handleDeleteTask}
-                onUpdateTask={handleUpdateTask}
-                onCreateTask={handleCreateTask}
-                canEdit={canEditTask}
-                boardId={boardId}
-              />
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <StatusColumn
+                  status={status}
+                  tasks={getTasksByStatus(status)}
+                  onDeleteTask={handleDeleteTask}
+                  onUpdateTask={handleUpdateTask}
+                  onCreateTask={handleCreateTask}
+                  canEdit={canEditTask}
+                  boardId={boardId}
+                />
+              </div>
             ))}
           </div>
 
           <DragOverlay>
             {activeTask ? (
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-xl">
-                <h4 className="font-semibold text-gray-900">
-                  {activeTask.title}
-                </h4>
+              <div className="bg-white border-2 border-blue-300 rounded-2xl p-5 shadow-colored transform rotate-3 scale-105">
+                <div className="flex items-center space-x-2 mb-3">
+                  <GripVertical className="w-5 h-5 text-gray-400" />
+                  <h4 className="font-bold text-gray-900 text-lg">
+                    {activeTask.title}
+                  </h4>
+                </div>
                 {activeTask.description && (
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                     {activeTask.description}
                   </p>
                 )}
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                    {activeTask.status}
+                  </span>
+                </div>
               </div>
             ) : null}
           </DragOverlay>
