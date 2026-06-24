@@ -1,0 +1,58 @@
+name: Daily Streak Maintenance
+
+on:
+  schedule:
+    # Run daily at 12:00 PM IST (6:30 AM UTC)
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  maintain-streak:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update streak timestamp
+        run: |
+          echo "Last streak update: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" > .github/streak.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "Abhishek6827"
+          git config user.email "devilizbusy@gmail.com"
+          git add .github/streak.txt
+          git diff --staged --quiet || git commit -m "chore: maintain daily streak"
+          git push origin main
+
+      - name: Send Telegram Notification
+        if: always()
+        run: |
+          STATUS="❌ FAILED"
+          if [ "${{ job.status }}" = "success" ]; then
+            STATUS="✅ SUCCESS"
+          fi
+
+          MESSAGE=$(cat <<EOF
+          🔥 *Daily Streak Update*
+
+          *Project:* ${{ github.repository }}
+          *Status:* $STATUS
+          *Commit:* \`${{ github.sha }}\`
+          *Branch:* \`${{ github.ref_name }}\`
+
+          [View Build Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+          )
+
+          PAYLOAD=$(jq -n --arg chat_id "${{ secrets.TELEGRAM_CHAT_ID }}" --arg text "$MESSAGE" --arg parse_mode "Markdown" '{chat_id: $chat_id, text: $text, parse_mode: $parse_mode}')
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BUILD_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
